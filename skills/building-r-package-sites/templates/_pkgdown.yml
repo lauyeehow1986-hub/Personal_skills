@@ -1,0 +1,22 @@
+url: https://OWNER.github.io/PKG/
+template:
+  bootstrap: 5
+
+# Every exported topic must appear below, or pkgdown::check_pkgdown() fails.
+# Group by task, in the order a new user meets them. `desc` is one sentence.
+reference:
+  - title: "Getting started"
+    desc: "The main entry points."
+    contents:
+      - main_function
+      - second_function
+
+  - title: "Helpers"
+    desc: "Smaller utilities used alongside the entry points."
+    contents:
+      - starts_with("pkg_")
+
+  - title: "Data"
+    desc: "Example datasets."
+    contents:
+      - example_data

@@ -1,0 +1,80 @@
+# .github/workflows/pkgdown.yaml - build the pkgdown site in CI and deploy it to GitHub Pages.
+# Use with Pages "Source: GitHub Actions" (Option B in SKILL.md). Do NOT also serve a committed
+# docs/ folder from a branch, or two deploys race on every push and the older one can win.
+name: pkgdown
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  pkgdown:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::pkgdown, local::.
+          needs: website
+
+      - name: Build site
+        run: pkgdown::build_site_github_pages(new_process = FALSE, install = TRUE)
+        shell: Rscript {0}
+
+      # pkgdown renders every root *.md (it ignores .Rbuildignore), so agent/dev notes
+      # (CLAUDE.md, AGENTS.md, MEMORY.md, GEMINI.md, ...) would become public pages.
+      #   (Same logic as scripts/scrub_site.R in the building-r-package-sites skill.)
+      - name: Drop dev notes from the site
+        shell: Rscript {0}
+        run: |
+          stems   <- c("CLAUDE", "AGENTS", "MEMORY", "GEMINI", "COPILOT", "CURSOR", "TODO")
+          pattern <- paste0("/(", paste(stems, collapse = "|"), ")\\.html")
+          unlink(file.path("docs", paste0(rep(stems, each = 2), c(".html", ".md"))))
+          sm <- readLines("docs/sitemap.xml", warn = FALSE)
+          writeLines(sm[!grepl(pattern, sm)], "docs/sitemap.xml")
+          idx  <- jsonlite::read_json("docs/search.json", simplifyVector = FALSE)
+          keep <- vapply(idx, function(x) !grepl(pattern, jsonlite::toJSON(x$path, auto_unbox = TRUE)), logical(1))
+          jsonlite::write_json(idx[keep], "docs/search.json", auto_unbox = TRUE, null = "null", digits = NA)
+          left <- grep(pattern, c(readLines("docs/sitemap.xml"), readLines("docs/search.json", warn = FALSE)), value = TRUE)
+          if (length(left)) stop("Dev notes still in the site: ", paste(left, collapse = " | "))
+
+      - name: Upload Pages artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: pkgdown
+    if: github.event_name != 'pull_request'
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
