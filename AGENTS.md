@@ -10,3 +10,5 @@ the skill's folder or pass their full path.
   inconsistently.
 - `skills/making-hex-logos-from-ai-images/SKILL.md`: use when a user supplies AI-generated or raster
   hex-sticker artwork and wants a package logo, README logo, favicon set or GitHub social preview card.
+- `skills/effort-harness-router/SKILL.md`: use when deciding which coding harness, model tier or
+  reasoning effort to use for a task, or how to cut token cost and latency on a coding task.

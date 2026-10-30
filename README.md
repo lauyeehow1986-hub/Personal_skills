@@ -9,6 +9,7 @@ that can read files can use them.
 |---|---|
 | [building-r-package-sites](skills/building-r-package-sites/SKILL.md) | Creating or redesigning an R package's pkgdown / GitHub Pages site and README home page |
 | [making-hex-logos-from-ai-images](skills/making-hex-logos-from-ai-images/SKILL.md) | Turning AI-generated hex-sticker art (Gemini, ChatGPT, ...) into a package logo, favicons and a social card |
+| [effort-harness-router](skills/effort-harness-router/SKILL.md) | Choosing a coding harness, model tier and reasoning effort for a task (cost/latency vs. difficulty) |
 
 ## Install
 
